@@ -2,11 +2,16 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"time"
 )
+
+type Cotacao struct {
+	Bid string `json:"bid"`
+}
 
 func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
@@ -29,11 +34,18 @@ func main() {
 			fmt.Println("Timeout ao chamar servidor")
 			return
 		}
-
 		fmt.Println("Erro ao chamar servidor:", err)
 		return
 	}
 	defer res.Body.Close()
 
-	fmt.Println("Requisição executada com sucesso")
+	var cotacao Cotacao
+
+	err = json.NewDecoder(res.Body).Decode(&cotacao)
+	if err != nil {
+		fmt.Println("Erro ao decodificar JSON:", err)
+		return
+	}
+
+	fmt.Println("Valor do dólar:", cotacao.Bid)
 }
