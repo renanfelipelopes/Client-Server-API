@@ -8,6 +8,14 @@ import (
 	"time"
 )
 
+type CotacaoResponse struct {
+	USDBRL USDBRL `json:"USDBRL"`
+}
+
+type USDBRL struct {
+	Bid string `json:"bid"`
+}
+
 func main() {
 	http.HandleFunc("/cotacao", handler)
 
