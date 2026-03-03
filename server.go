@@ -67,6 +67,14 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	valor := cotacao.USDBRL.Bid
+	response := map[string]string{
+		"bid": valor,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("API chamada com sucesso"))
 }
