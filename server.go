@@ -21,8 +21,6 @@ type USDBRL struct {
 }
 
 func main() {
-	sql.Open("sqlite3", "./cotacao.db")
-
 	http.HandleFunc("/cotacao", handler)
 
 	log.Println("Servidor rodando na porta 8080")
@@ -73,6 +71,26 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	valor := cotacao.USDBRL.Bid
 	response := map[string]string{
 		"bid": valor,
+	}
+
+	db, err := sql.Open("sqlite3", "./cotacao.db")
+	if err != nil {
+		log.Println("Erro ao abrir banco:", err)
+		return
+	}
+	defer db.Close()
+
+	createTable := `
+	CREATE TABLE IF NOT EXISTS cotacoes (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		bid TEXT,
+		created_at DATETIME
+	);`
+
+	_, err = db.Exec(createTable)
+	if err != nil {
+		log.Println("Erro ao criar tabela:", err)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
