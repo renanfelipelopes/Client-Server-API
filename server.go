@@ -2,11 +2,14 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
 	"time"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type CotacaoResponse struct {
@@ -18,6 +21,8 @@ type USDBRL struct {
 }
 
 func main() {
+	sql.Open("sqlite3", "./cotacao.db")
+
 	http.HandleFunc("/cotacao", handler)
 
 	log.Println("Servidor rodando na porta 8080")
@@ -37,7 +42,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		"https://economia.awesomeapi.com.br/json/last/USD-BRL",
 		nil,
 	)
-
 	if err != nil {
 		log.Println("Erro ao criar requisição:", err)
 		http.Error(w, "Erro interno", http.StatusInternalServerError)
@@ -59,7 +63,6 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	defer res.Body.Close()
 
 	var cotacao CotacaoResponse
-
 	err = json.NewDecoder(res.Body).Decode(&cotacao)
 	if err != nil {
 		log.Println("Erro ao decodificar JSON:", err)
