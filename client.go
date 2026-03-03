@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -24,7 +25,12 @@ func main() {
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
-		fmt.Println("Erro na requisição:", err)
+		if errors.Is(err, context.DeadlineExceeded) {
+			fmt.Println("Timeout ao chamar servidor")
+			return
+		}
+
+		fmt.Println("Erro ao chamar servidor:", err)
 		return
 	}
 	defer res.Body.Close()
