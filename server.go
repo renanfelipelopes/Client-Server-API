@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
@@ -56,6 +57,15 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer res.Body.Close()
+
+	var cotacao CotacaoResponse
+
+	err = json.NewDecoder(res.Body).Decode(&cotacao)
+	if err != nil {
+		log.Println("Erro ao decodificar JSON:", err)
+		http.Error(w, "Erro ao processar resposta da API", http.StatusInternalServerError)
+		return
+	}
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("API chamada com sucesso"))
