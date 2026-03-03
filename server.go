@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 type CotacaoResponse struct {
@@ -68,12 +68,9 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	valor := cotacao.USDBRL.Bid
-	response := map[string]string{
-		"bid": valor,
-	}
+	bid := cotacao.USDBRL.Bid
 
-	db, err := sql.Open("sqlite3", "./cotacao.db")
+	db, err := sql.Open("sqlite", "./cotacao.db")
 	if err != nil {
 		log.Println("Erro ao abrir banco:", err)
 		return
@@ -93,9 +90,23 @@ func handler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
+	ctxDB, cancelDB := context.WithTimeout(context.Background(), 10*time.Millisecond)
+	defer cancelDB()
 
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("API chamada com sucesso"))
+	insert := `INSERT INTO cotacoes (bid, created_at) VALUES (?, ?)`
+
+	_, err = db.ExecContext(ctxDB, insert, bid, time.Now())
+	if err != nil {
+		if errors.Is(err, context.DeadlineExceeded) {
+			log.Println("Timeout ao salvar no banco")
+			return
+		}
+		log.Println("Erro ao inserir no banco:", err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"bid": bid,
+	})
 }
